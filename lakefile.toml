@@ -1,0 +1,20 @@
+name = "Catalogue"
+defaultTargets = ["catalogue"]
+
+[leanOptions]
+pp.unicode.fun = true
+weak.linter.flexible = true
+weak.linter.refine = true
+weak.linter.oldObtain = true
+weak.linter.style.multiGoal = true
+
+[[require]]
+scope = "FormalizedFormalLogic"
+name = "Foundation"
+
+[[lean_lib]]
+name = "Catalogue"
+
+[[lean_exe]]
+name = "catalogue"
+root = "Catalogue"
