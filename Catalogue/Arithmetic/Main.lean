@@ -3,6 +3,7 @@ import Catalogue.Arithmetic.ISigma0
 import Catalogue.Arithmetic.ISigma1
 import Catalogue.Arithmetic.Goedel1
 import Catalogue.Arithmetic.Goedel2
+import Catalogue.Arithmetic.Tarski
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -81,3 +82,5 @@ This approach has several advantages:
 {include 0 Catalogue.Arithmetic.Goedel1}
 
 {include 0 Catalogue.Arithmetic.Goedel2}
+
+{include 0 Catalogue.Arithmetic.Tarski}
