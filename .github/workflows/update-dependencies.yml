@@ -77,7 +77,7 @@ jobs:
 
           # Check if the branch exists
           git fetch origin
-          if git rev-parse --verify "origin/$BRANCH_NAME" >/dev/null 2>&1; then
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "Branch $BRANCH_NAME already exists, updating it"
             git checkout -B "$BRANCH_NAME"
           else
@@ -90,7 +90,7 @@ jobs:
           git commit -m "chore: Update dependencies (automated)"
 
           # Push changes
-          git push -f origin "$BRANCH_NAME"
+          git push --force-with-lease origin "$BRANCH_NAME"
 
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number' || echo "")
