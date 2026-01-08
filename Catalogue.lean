@@ -1,17 +1,28 @@
-import Catalogue.Main
+import Catalogue.Init
+import Catalogue.FirstOrder.Main
+import Catalogue.Arithmetic.Main
+import Catalogue.SetTheory.Main
+import Catalogue.Modal.Main
+import Catalogue.InterpretabilityLogic.Main
+import Catalogue.Monthly.Main
 
-open Verso.Genre.Manual
+open Verso.Genre
 
-def juliamonoFonts := (include_bin_dir "./assets/juliamono") |>.map λ (name, contents) => (name.stripPrefix "./assets/", contents)
+#doc (Manual) "Formalized Formal Logic" =>
+%%%
+%%%
 
-def main := manualMain (%doc Catalogue.Main) (config := config)
-where
-  config := Config.addKaTeX {
-    htmlDepth := 2,
-    sourceLink := some "https://github.com/FormalizedFormalLogic/Foundation",
-    issueLink := some "https://github.com/FormalizedFormalLogic/Foundation/issues",
-    extraFiles := [("./assets", "./assets")],
-    logo := some "/assets/logo.svg",
-    extraCssFiles := #[("./style.css", include_str "./assets/style.css")],
-    extraDataFiles := juliamonoFonts,
-  }
+[Formalized Formal Logic](https://github.com/FormalizedFormalLogic/Foundation) is aim to machanize
+some various results of mathematical logic in [Lean Theorem Prover](https://lean-lang.org).
+
+{include 0 Catalogue.FirstOrder.Main}
+
+{include 0 Catalogue.Arithmetic.Main}
+
+{include 0 Catalogue.SetTheory.Main}
+
+{include 0 Catalogue.Modal.Main}
+
+{include 0 Catalogue.InterpretabilityLogic.Main}
+
+{include 0 Catalogue.Monthly.Main}

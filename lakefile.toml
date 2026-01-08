@@ -11,10 +11,16 @@ weak.linter.style.multiGoal = true
 [[require]]
 scope = "FormalizedFormalLogic"
 name = "Foundation"
+rev = "master"
+
+[[require]]
+name = "verso"
+git = "https://github.com/leanprover/verso.git"
+rev = "main"
 
 [[lean_lib]]
 name = "Catalogue"
 
 [[lean_exe]]
 name = "catalogue"
-root = "Catalogue"
+root = "Main"
