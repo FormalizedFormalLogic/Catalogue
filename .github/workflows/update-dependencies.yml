@@ -1,0 +1,107 @@
+name: Update Dependencies
+
+on:
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: Update dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup elan
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Update dependencies
+        run: lake update
+
+      - name: Get Mathlib cache
+        run: lake exe cache get || true
+
+      - name: Download JuliaMono
+        run: |
+          wget https://github.com/cormullion/juliamono/releases/download/v0.061/JuliaMono-webfonts.tar.gz
+          mkdir -p juliamono
+          tar -xvf JuliaMono-webfonts.tar.gz -C juliamono --strip-components 1
+          rm JuliaMono-webfonts.tar.gz
+        working-directory: ./assets
+
+      - name: Build Catalogue
+        run: lake exe catalogue
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are any changes
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Changes detected:"
+            git status --porcelain
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No changes detected"
+          fi
+
+      - name: Create or update PR
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="auto-update-dependencies"
+          PR_TITLE="chore: Update dependencies"
+          PR_BODY="Automated weekly dependency update via \`lake update\`.
+
+          This PR updates the project dependencies and rebuilds the catalogue.
+
+          **Changes:**
+          - Updated lake-manifest.json with latest dependency versions
+          - Rebuilt catalogue output
+
+          ---
+          *This PR was automatically created by the [Update Dependencies workflow](.github/workflows/update-dependencies.yml).*"
+
+          # Check if the branch exists
+          git fetch origin
+          if git rev-parse --verify "origin/$BRANCH_NAME" >/dev/null 2>&1; then
+            echo "Branch $BRANCH_NAME already exists, updating it"
+            git checkout -B "$BRANCH_NAME"
+          else
+            echo "Creating new branch $BRANCH_NAME"
+            git checkout -b "$BRANCH_NAME"
+          fi
+
+          # Stage and commit changes
+          git add .
+          git commit -m "chore: Update dependencies (automated)"
+
+          # Push changes
+          git push -f origin "$BRANCH_NAME"
+
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number' || echo "")
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Updating existing PR #$EXISTING_PR"
+            gh pr edit "$EXISTING_PR" --title "$PR_TITLE" --body "$PR_BODY"
+            
+            # Ensure the PR has the label
+            gh pr edit "$EXISTING_PR" --add-label "auto update"
+          else
+            echo "Creating new PR"
+            gh pr create --title "$PR_TITLE" --body "$PR_BODY" --head "$BRANCH_NAME" --base main --label "auto update"
+          fi
