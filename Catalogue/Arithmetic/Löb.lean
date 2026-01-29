@@ -14,8 +14,7 @@ open LO Entailment FirstOrder Arithmetic Bootstrapping Bootstrapping.Arithmetic
 tag := "löb-theorem"
 %%%
 
-Löb's theorem loughly states that for any sentence `σ`,
-assume "if `σ` is provable, then `σ` is true", then `σ` is true.
+Löb's theorem roughly states that any sentence `σ` is true if the following sentence is true: "if `σ` is provable, then `σ` is true".
 
 {docstring LO.FirstOrder.Arithmetic.löb_theorem}
 
