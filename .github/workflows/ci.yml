@@ -29,6 +29,7 @@ jobs:
           restore-keys: |
             lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
       - name: Get Mathlib cache
+        if: steps.cache-restore.outputs.cache-hit != 'true'
         run: lake exe cache get
 
       # Build Catalogue
