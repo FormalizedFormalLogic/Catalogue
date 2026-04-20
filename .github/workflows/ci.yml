@@ -5,10 +5,17 @@ on:
     branches:
       - main
   pull_request:
-  merge_group:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -20,17 +27,22 @@ jobs:
         run: |
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      # Restore project cache
+      - name: Get Mathlib cache
+        run: lake exe cache get
       - name: Restore cache
         id: cache-restore
         uses: actions/cache/restore@v5
         with:
-          path: .lake
-          key: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-${{ github.sha }}
+          path: .lake/Catalogue-x86_64-unknown-linux-gnu.tar.gz
+          # NOTE: including github branch name and SHA for avoding cache key reserving problem
+          key: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
+            lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-${{ github.ref_name }}
             lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
-      - name: Get Mathlib cache
-        if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: lake exe cache get
+      - name: Unpack project cache
+        if: hashFiles('.lake/Catalogue-x86_64-unknown-linux-gnu.tar.gz') != ''
+        run: lake unpack
 
       # Build Catalogue
       - name: Download JuliaMono
@@ -44,11 +56,14 @@ jobs:
       - name: Build Catalogue
         run: lake exe catalogue
 
+      - name: Pack project cache
+        run: lake pack
       - name: Save project cache
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        id: cache-save
         uses: actions/cache/save@v5
         with:
-          path: .lake
+          path: .lake/Catalogue-x86_64-unknown-linux-gnu.tar.gz
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
       # Upload pages artifact
